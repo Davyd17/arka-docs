@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arka — System Documentation</title>
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+
+  <body>
+    <!-- ============================================================
+       TOP BAR
+  ============================================================= -->
+    <header class="topbar">
+      <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar">☰</button>
+      <div class="brand">
+        <span class="brand-name">Arka</span>
+        <span class="brand-tag">System Documentation</span>
+      </div>
+      <button id="themeToggle" class="theme-toggle" aria-label="Toggle dark/light mode">
+        <span class="icon-sun">☀</span>
+        <span class="icon-moon">☾</span>
+      </button>
+    </header>
+
+    <div class="layout">
+      <!-- ============================================================
+         SIDEBAR NAVIGATION
+    ============================================================= -->
+      <nav id="sidebar" class="sidebar">
+        <div class="nav-items">
+          <button class="nav-item active" data-section="overview">Overview</button>
+
+          <div class="nav-group">
+            <p class="nav-group-title">Architecture</p>
+            <button class="nav-item" data-section="arch-clean">
+              Clean / Hexagonal Architecture
+            </button>
+            <button class="nav-item" data-section="arch-ddd">Domain-Driven Design</button>
+          </div>
+
+          <div class="nav-group">
+            <p class="nav-group-title">System &amp; Cloud</p>
+            <button class="nav-item" data-section="cloud-architecture">Cloud Architecture</button>
+            <button class="nav-item" data-section="infra-networking">
+              Infrastructure &amp; Networking
+            </button>
+            <button class="nav-item" data-section="cicd">CI/CD Pipeline</button>
+          </div>
+
+          <div class="nav-group">
+            <p class="nav-group-title">Data &amp; Flows</p>
+            <button class="nav-item" data-section="database">Database Model</button>
+            <button class="nav-item" data-section="event-flows">Event-Driven Flows</button>
+            <button class="nav-item" data-section="key-flows">Key Flows (Sequence Diagrams)</button>
+          </div>
+
+          <div class="nav-group">
+            <p class="nav-group-title">Security</p>
+            <button class="nav-item" data-section="security">
+              Authentication &amp; Authorization
+            </button>
+          </div>
+
+          <div class="nav-group">
+            <p class="nav-group-title">Project</p>
+            <button class="nav-item" data-section="user-stories">User Stories</button>
+            <button class="nav-item" data-section="tech-stack">Tech Stack</button>
+            <button class="nav-item" data-section="contact">Contact</button>
+          </div>
+        </div>
+      </nav>
+
+      <!-- ============================================================
+         MAIN CONTENT
+    ============================================================= -->
+      <main class="content">
+        <!-- ===================== OVERVIEW ===================== -->
+        <section id="overview" class="page active">
+          <h1>Arka</h1>
+          <p class="lead">
+            A B2B technology distribution platform built to demonstrate production-grade backend
+            engineering: Clean Architecture, Domain-Driven Design, event-driven workflows, and a
+            real AWS deployment.
+          </p>
+
+          <p>
+            Arka started as a modular monolith and evolved into two cooperating services as the
+            domain boundaries became clear:
+          </p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h3>arka-auth</h3>
+              <p>
+                Authentication, authorization, user identity, email verification, and password
+                reset.
+              </p>
+            </div>
+            <div class="card">
+              <h3>arka-core</h3>
+              <p>
+                Business domain: orders, products, inventory, customers, suppliers, shipping, and
+                reporting.
+              </p>
+            </div>
+          </div>
+
+          <p>
+            Each service owns its own database, its own Clean Architecture layering, and validates
+            JWTs locally and statelessly —
+            <code>core-service</code> never calls back to <code>auth-service</code> to check a
+            token.
+          </p>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/high_level_system_overview.png')"
+          >
+            <img src="assets/high_level_system_overview.png" alt="high_level_system_overview" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <h2>Known Limitations &amp; Roadmap</h2>
+          <p>Being upfront about what's intentionally incomplete:</p>
+          <ul>
+            <li>No frontend yet — API-first development; a minimal admin dashboard is planned</li>
+            <li>
+              No combined <code>docker-compose.yml</code> for one-command local setup across both
+              services
+            </li>
+            <li>
+              Notification flow partially migrated to event-driven — further consolidation planned
+            </li>
+            <li>
+              Single-instance ECS deployment (EC2, min=desired=max=1) — a deliberate MVP cost
+              tradeoff, not an oversight
+            </li>
+            <li>No distributed tracing across the two services yet (correlation IDs planned)</li>
+            <li>
+              Infrastructure provisioned manually — Terraform is planned for reproducible, fast
+              environment setup
+            </li>
+          </ul>
+
+          <h2>Where to go next</h2>
+          <p>Use the sidebar to explore the system in depth:</p>
+          <ul>
+            <li><strong>Architecture</strong> — how the codebase is structured internally</li>
+            <li><strong>System &amp; Cloud</strong> — how it's deployed, networked, and shipped</li>
+            <li>
+              <strong>Data &amp; Flows</strong> — how data is modeled and how work moves through the
+              system
+            </li>
+            <li><strong>Security</strong> — how access is controlled</li>
+          </ul>
+        </section>
+
+        <!-- ============== ARCHITECTURE: CLEAN / HEXAGONAL ============== -->
+        <section id="arch-clean" class="page">
+          <h1>Clean / Hexagonal Architecture</h1>
+          <p class="lead">
+            Both services follow the same layered architecture, keeping business logic independent
+            of frameworks and infrastructure. Each service is a modular Gradle project, designed to
+            allow decoupling and facilitate extraction into a standalone microservice if needed,
+            thanks to the isolation of external dependencies.
+          </p>
+
+          <pre class="code-block">
+domain/model        → entities, enums, exceptions, value objects — no Spring dependency
+domain/usecase      → use cases, DTOs (In/Out, Command/Event), mappers, gateways
+infrastructure/
+  driven-adapters/  → jpa-repository, aws-provider, core-service-provider, security-provider
+  entry-points/     → api-rest, security, sqs-listener
+main-app/boot       → Spring Boot entry point, wiring, configuration</pre
+          >
+
+          <div
+            class="diagram-placeholder small zoomable-container"
+            onclick="openModal('assets/clean_architecture_hexagonal.png')"
+          >
+            <img src="assets/clean_architecture_hexagonal.png" alt="layered architecture diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/arcihtecture-example.jpg')"
+          >
+            <img src="assets/arcihtecture-example.jpg" alt="clean-architecture-example" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <h2>Key decisions</h2>
+          <ul>
+            <li>
+              <strong>Domain layer is framework-free</strong> — no Spring annotations, no JPA, no
+              HTTP concepts. Gateways (ports) are interfaces implemented by adapters in the
+              infrastructure layer.
+            </li>
+            <li>
+              <strong>Dependency direction is inward</strong> — infrastructure depends on the
+              domain; the domain never depends on infrastructure.
+            </li>
+            <li>
+              <strong>MapStruct everywhere</strong> for layer-to-layer mapping, keeping conversion
+              logic out of business code.
+            </li>
+            <li>
+              <strong>DTO naming convention</strong> is deliberately split: <code>In</code>/<code
+                >Out</code
+              >
+              for synchronous use cases, <code>Command</code>/<code>Event</code> for asynchronous,
+              SQS-published flows.
+            </li>
+            <li>
+              <strong>Global exception handling</strong>
+              (<code>GlobalExceptionHandler</code>) with a consistent
+              <code>ErrorResponse</code> shape — no stack traces leak to clients.
+            </li>
+          </ul>
+
+          <h2>Why two services, one pattern</h2>
+          <p>
+            <code>arka-auth</code> and <code>arka-core</code> are deployed and scaled independently,
+            but both apply the exact same internal layering. That consistency means a change in one
+            service's structure is a change a reviewer already understands from the other.
+          </p>
+        </section>
+
+        <!-- ============== ARCHITECTURE: DDD ============== -->
+        <section id="arch-ddd" class="page">
+          <h1>Domain-Driven Design</h1>
+          <p class="lead">
+            Domain entities enforce their own invariants — invalid states are rejected at
+            construction, not caught later by validation layers.
+          </p>
+
+          <h2>Entity construction</h2>
+          <p>
+            Entities use private builders with static factory methods (<code>create()</code>) so an
+            entity can never exist in an invalid state. There is no public no-arg constructor to
+            fall back on.
+          </p>
+
+          <h2>State machines in enums</h2>
+          <p>
+            Status enums (<code>OrderStatus</code>, <code>ShippingStatus</code>,
+            <code>ShoppingCartStatus</code>) own their own transition rules via
+            <code>validateEditable()</code> / <code>transitionTo()</code>, making illegal state
+            transitions a domain-level concern rather than something scattered across use cases.
+          </p>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/order_status_state_machine.svg')"
+          >
+            <img
+              src="assets/order_status_state_machine.svg"
+              alt="order status state machine diagram"
+            />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <h2>Ownership modeling</h2>
+          <p>
+            A <code>Company</code> has a list of <code>Contact</code>s. A <code>Contact</code> may
+            or may not be linked to a registered <code>User</code> — linkage is resolved by email,
+            not by a shared database id, since the two services never share primary keys across
+            their boundary. This is what makes the
+            <code>User → Contact → Company → Order</code>
+            ownership check possible: a user can only access orders belonging to their own company.
+          </p>
+        </section>
+
+        <!-- ============== CLOUD ARCHITECTURE ============== -->
+        <section id="cloud-architecture" class="page">
+          <h1>Cloud Architecture</h1>
+          <p class="lead">
+            Arka runs entirely on AWS, it has a low-cost architecture fitting the project's scale.
+          </p>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/cloud_architecture.drawio.png')"
+          >
+            <img src="assets/cloud_architecture.drawio.png" alt="AWS architecture diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <table class="info-table">
+            <thead>
+              <tr>
+                <th>Component</th>
+                <th>Service</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Compute</td>
+                <td>ECS on EC2</td>
+                <td>
+                  Self-healing Auto Scaling Group (min = desired = max = 1), chosen over Fargate for
+                  cost
+                </td>
+              </tr>
+              <tr>
+                <td>Database</td>
+                <td>RDS (PostgreSQL)</td>
+                <td>One instance per service</td>
+              </tr>
+              <tr>
+                <td>Async messaging</td>
+                <td>SQS</td>
+                <td>Decouples report generation and notifications from the request thread</td>
+              </tr>
+              <tr>
+                <td>Scheduling</td>
+                <td>EventBridge + Lambda</td>
+                <td>Triggers weekly report generation on a schedule</td>
+              </tr>
+              <tr>
+                <td>Email</td>
+                <td>SES</td>
+                <td>Sends verification, password reset, and order-status emails</td>
+              </tr>
+              <tr>
+                <td>Storage</td>
+                <td>S3</td>
+                <td>Hosts HTML email templates</td>
+              </tr>
+              <tr>
+                <td>CI/CD</td>
+                <td>CodePipeline → CodeBuild → ECR</td>
+                <td>Builds, tests, and deploys on every push</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>Roadmap</h2>
+          <p>
+            Infrastructure is currently provisioned by hand through the AWS console. Terraform is
+            planned next so the whole environment can be torn down and rebuilt reproducibly.
+          </p>
+        </section>
+
+        <!-- ============== INFRASTRUCTURE & NETWORKING ============== -->
+        <section id="infra-networking" class="page">
+          <h1>Infrastructure &amp; Networking</h1>
+          <p class="lead">
+            Both services sit behind a single reverse proxy, with network-level isolation for
+            anything that shouldn't be publicly reachable.
+          </p>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/network-diagram.drawio.png')"
+          >
+            <img src="assets/network-diagram.drawio.png" alt="Network diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <h2>Reverse proxy</h2>
+          <ul>
+            <li>
+              <strong>Nginx</strong> routes public traffic to each service by path (<code
+                >/api/v1/auth/...</code
+              >
+              vs <code>/api/v1/...</code>), avoiding Spring context-paths.
+            </li>
+            <li>
+              <strong>Certbot</strong> (Let's Encrypt) handles TLS certificate issuance and renewal
+              — all public traffic is HTTPS.
+            </li>
+            <li>
+              <strong>Rate limiting</strong> is enforced at the Nginx layer
+              (<code>limit_req_zone</code>) rather than per-service, so every endpoint is covered
+              without duplicating logic in each codebase.
+            </li>
+            <li>
+              <strong>Load balancing</strong> is handled by Nginx <code>upstream</code> blocks.
+            </li>
+            <li>
+              API docs are served from a dedicated path (<code>/auth/docs</code>,
+              <code>/core/docs</code>) kept separate from the versioned API paths.
+            </li>
+          </ul>
+
+          <h2>Internal-only communication</h2>
+          <p>
+            Endpoints that should never be reachable from the public internet — report triggers, the
+            inter-service <code>Contact</code> creation call — are exposed only on private IPs
+            within the VPC. <strong>Security groups</strong> act as the actual firewall here: even
+            if an application-level check were missing, the network itself refuses the connection
+            from outside the VPC.
+          </p>
+        </section>
+
+        <!-- ============== CI/CD ============== -->
+        <section id="cicd" class="page">
+          <h1>CI/CD Pipeline</h1>
+          <p class="lead">
+            Every push to prod is built, tested, and deployed through the same automated path.
+          </p>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/ci_cd_pipeline.png')"
+          >
+            <img src="assets/ci_cd_pipeline.png" alt="ci/cd pipeline diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/arka_core_aws_pipeline.png')"
+          >
+            <img src="assets/arka_core_aws_pipeline.png" alt="core pipeline diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/arka_auth_aws_pipeline.png')"
+          >
+            <img src="assets/arka_auth_aws_pipeline.png" alt="auth pipeline diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <ol class="step-list">
+            <li><strong>Source</strong> — CodePipeline picks up a push to the tracked branch.</li>
+            <li>
+              <strong>Build &amp; test</strong> — CodeBuild runs <code>./gradlew test</code> before
+              packaging; a failing test blocks the rest of the pipeline.
+            </li>
+            <li>
+              <strong>Image build</strong> — a multi-stage Docker build produces a slim runtime
+              image (headless JRE), pushed to ECR.
+            </li>
+            <li>
+              <strong>Deploy</strong> — ECS pulls the new image and replaces the running task on the
+              EC2 instance.
+            </li>
+          </ol>
+
+          <h2>Why this shape</h2>
+          <p>
+            Tests run in CI, not just locally — a service that compiles but fails its test suite
+            never reaches ECR. The build stage uses a full JDK image (needed for the Gradle
+            toolchain); only the production stage uses the smaller headless JRE image.
+          </p>
+        </section>
+
+        <!-- ============== DATABASE MODEL ============== -->
+        <section id="database" class="page">
+          <h1>Database Model</h1>
+          <p class="lead">Each service owns its own schema — there is no shared database.</p>
+
+          <h2>Arka Core ER diagram</h2>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/arka-db-model.png')"
+          >
+            <img src="assets/arka-db-model.png" alt="ci/cd pipeline diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <h2>Arka Core by domain</h2>
+          <p>
+            The same model split into three domains. Tables shown with only a few columns are
+            references to a table defined in another domain.
+          </p>
+
+          <div class="er-grid">
+            <div class="er-card" onclick="openModal('assets/contacts_and_companies.png')">
+              <div class="er-head">
+                <h3>Contacts &amp; companies</h3>
+                <span class="er-badge">5 tables</span>
+              </div>
+              <div class="er-preview">
+                <img
+                  src="assets/contacts_and_companies.png"
+                  alt="ER diagram: contacts and companies"
+                />
+                <span class="zoom-hint">🔍 Clic para expandir</span>
+              </div>
+            </div>
+
+            <div class="er-card" onclick="openModal('assets/catalog_and_inventory.png')">
+              <div class="er-head">
+                <h3>Catalog &amp; inventory</h3>
+                <span class="er-badge">6 tables</span>
+              </div>
+              <div class="er-preview">
+                <img
+                  src="assets/catalog_and_inventory.png"
+                  alt="ER diagram: catalog and inventory"
+                />
+                <span class="zoom-hint">🔍 Clic para expandir</span>
+              </div>
+            </div>
+
+            <div class="er-card" onclick="openModal('assets/orders_and_cart.png')">
+              <div class="er-head">
+                <h3>Orders &amp; cart</h3>
+                <span class="er-badge">5 tables</span>
+              </div>
+              <div class="er-preview">
+                <img
+                  src="assets/orders_and_cart.png"
+                  alt="ER diagram: orders, shipping and shopping cart"
+                />
+                <span class="zoom-hint">🔍 Clic para expandir</span>
+              </div>
+            </div>
+          </div>
+
+          <h2>Arka Auth ER diagram</h2>
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/arka-auth-db-model.png')"
+          >
+            <img src="assets/arka-auth-db-model.png" alt="ci/cd pipeline diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <h2>Cross-service linkage</h2>
+          <p>
+            A <code>Contact</code> in <code>arka-core</code> is linked to a <code>User</code> in
+            <code>arka-auth</code> by <strong>email</strong>, not by a shared foreign key — the two
+            services don't share primary keys across their boundary. A <code>Contact</code> without
+            a matching registered user simply has no linked account yet.
+          </p>
+
+          <h2>Nullable-by-design fields</h2>
+          <p>
+            Several <code>Contact</code> fields (<code>company_position</code>,
+            <code>company_id</code>) are nullable by design: a contact can exist before it's tied to
+            a company or before it registers as a user. This reflects a real intermediate state, not
+            missing data.
+          </p>
+
+          <h2>Migrations</h2>
+          <p>
+            Schema changes are versioned with <strong>Flyway</strong>. Each service's migration
+            history is independent, including dedicated seed-data migrations used by the integration
+            test suites.
+          </p>
+        </section>
+
+        <!-- ============== EVENT-DRIVEN FLOWS ============== -->
+        <section id="event-flows" class="page">
+          <h1>Event-Driven Flows</h1>
+          <p class="lead">
+            Reports and order-status notifications run asynchronously through Amazon SQS instead of
+            blocking the originating request.
+          </p>
+
+          <pre class="code-block">
+Use case → publishes a *RequestedEvent → Amazon SQS → listener consumes it
+         → downstream use case (report generation / email) runs independently</pre
+          >
+
+          <div
+            class="diagram-placeholder zoomable-container"
+            onclick="openModal('assets/event_driven_flow.png')"
+          >
+            <img src="assets/event_driven_flow.png" alt="ci/cd pipeline diagram" />
+            <span class="zoom-hint">🔍 Clic para expandir</span>
+          </div>
+
+          <h2>Why SQS over Kafka</h2>
+          <p>
+            Kafka was considered and deliberately set aside for this stage of the project. SQS gives
+            the same core benefit — decoupling slow or unreliable downstream work (SES calls, report
+            queries) from the request thread — with far less operational complexity, which matters
+            for an MVP on a tight timeline.
+          </p>
+
+          <h2>Pluggable report formats</h2>
+          <p>
+            Report generation uses a
+            <strong>factory/strategy pattern</strong> to select an output format. Only
+            <strong>CSV</strong> is implemented today, but the abstraction means PDF (or others) can
+            be added later without touching the use cases that request a report.
+          </p>
+
+          <h2>Naming convention</h2>
+          <p>
+            Synchronous use cases use <code>In</code>/<code>Out</code> DTOs. Asynchronous,
+            SQS-published flows use <code>Command</code>/<code>Event</code>
+            instead — a deliberate, scoped distinction rather than a codebase-wide rename.
+          </p>
+        </section>
+
+        <!-- ============== KEY FLOWS (SEQUENCE DIAGRAMS) ============== -->
+        <section id="key-flows" class="page">
+          <h1>Key Flows</h1>
+          <p class="lead">Sequence diagrams for the flows worth seeing step by step.</p>
+
+          <div class="card-grid">
+            <div class="card">
+              <h3>User Registration</h3>
+              <p>
+                <code>arka-auth</code> creates the <code>User</code>, then calls
+                <code>arka-core</code> synchronously to create the linked <code>Contact</code>. If
+                that call fails, the <code>User</code> is rolled back via a compensating transaction
+                so no orphaned account is left behind.
+              </p>
+              <div class="diagram-placeholder small">📊 Sequence diagram placeholder</div>
+            </div>
+
+            <div class="card">
+              <h3>Order Status Update</h3>
+              <p>
+                A status change triggers an
+                <code>OrderStatusUpdatedRequestedEvent</code>
+                published to SQS, which a listener picks up to send the notification email
+                independently of the original request.
+              </p>
+              <div class="diagram-placeholder small">📊 Sequence diagram placeholder</div>
+            </div>
+
+            <div class="card">
+              <h3>Password Reset</h3>
+              <p>
+                A time-limited token is generated, stored, and emailed via an S3-stored HTML
+                template through SES; the token is single-use and expires automatically.
+              </p>
+              <div class="diagram-placeholder small">📊 Sequence diagram placeholder</div>
+            </div>
+
+            <div class="card">
+              <h3>Weekly Report Generation</h3>
+              <p>
+                EventBridge triggers a Lambda on a schedule, which publishes a report-requested
+                event; a listener in
+                <code>arka-core</code> generates the report (CSV today) and delivers it.
+              </p>
+              <div class="diagram-placeholder small">📊 Sequence diagram placeholder</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============== SECURITY ============== -->
+        <section id="security" class="page">
+          <h1>Authentication &amp; Authorization</h1>
+          <p class="lead">Stateless JWT auth, validated independently by each service.</p>
+
+          <h2>JWT handling</h2>
+          <ul>
+            <li>
+              Tokens are issued by <code>arka-auth</code> and validated locally by whichever service
+              receives a request — <code>arka-core</code> never calls back to check a token.
+            </li>
+            <li>
+              Expired or malformed tokens are caught inside the JWT filter itself and turned into a
+              structured JSON error response (<code>401</code>), instead of an unhandled exception.
+            </li>
+          </ul>
+
+          <h2>Role-based access control</h2>
+          <p>
+            Two roles — <code>USER</code> and <code>ADMIN</code> — are enforced declaratively in
+            <code>SecurityConfig</code>. A custom <code>AccessDeniedHandler</code> /
+            <code>AuthenticationEntryPoint</code> implementation ensures 401/403 responses carry the
+            same structured JSON shape as every other error in the system.
+          </p>
+
+          <h2>Network-level isolation</h2>
+          <p>
+            Internal-only endpoints are additionally restricted by private IP + security groups (see
+            <em>Infrastructure &amp; Networking</em>) — authorization isn't only an
+            application-layer concern here.
+          </p>
+        </section>
+
+        <!-- ============== USER STORIES ============== -->
+        <section id="user-stories" class="page">
+          <h1>User Stories</h1>
+          <p class="lead">
+            The product backlog driving Arka's backend, organized by module. Kept in the original
+            Spanish as written in the project's backlog document.
+          </p>
+
+          <h2>Módulo 1 — Gestión de Inventario y Abastecimiento</h2>
+          <div class="card-grid">
+            <div class="card story-card">
+              <h3>HU1 — Registrar productos en el sistema</h3>
+              <p class="story-text">
+                Como administrador, quiero registrar nuevos productos con sus características para
+                que los clientes puedan comprarlos.
+              </p>
+              <ul>
+                <li>
+                  Se debe permitir la carga de nombre, descripción, precio, stock y categoría.
+                </li>
+                <li>Validaciones de datos requeridos.</li>
+                <li>Mensaje de confirmación tras el registro exitoso.</li>
+              </ul>
+            </div>
+
+            <div class="card story-card">
+              <h3>HU2 — Actualizar stock de productos</h3>
+              <p class="story-text">
+                Como administrador, quiero actualizar la cantidad de productos en stock para evitar
+                sobreventas.
+              </p>
+              <ul>
+                <li>El sistema debe permitir modificar el stock de un producto.</li>
+                <li>No se deben permitir valores negativos.</li>
+                <li>Historial de cambios en el stock.</li>
+              </ul>
+            </div>
+
+            <div class="card story-card">
+              <h3>HU3 — Generar reportes de productos por abastecer</h3>
+              <p class="story-text">
+                Como administrador, quiero recibir reportes de productos con bajo stock para tomar
+                decisiones de abastecimiento.
+              </p>
+              <ul>
+                <li>El reporte debe generarse automáticamente cada semana.</li>
+                <li>Debe incluir productos con stock menor a un umbral configurable.</li>
+                <li>Exportación en formato CSV o PDF.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h2>Módulo 2 — Gestión de Órdenes de Compra</h2>
+          <div class="card-grid">
+            <div class="card story-card">
+              <h3>HU4 — Registrar una orden de compra</h3>
+              <p class="story-text">
+                Como cliente, quiero poder registrar una orden de compra con múltiples productos
+                para realizar mi pedido.
+              </p>
+              <ul>
+                <li>Se debe validar la disponibilidad del stock.</li>
+                <li>Registro de fecha y detalles del pedido.</li>
+                <li>Mensaje de confirmación con resumen del pedido.</li>
+              </ul>
+            </div>
+
+            <div class="card story-card">
+              <h3>HU5 — Modificar una orden de compra</h3>
+              <p class="story-text">
+                Como cliente, quiero modificar mi pedido antes de su confirmación para corregir
+                errores o agregar productos.
+              </p>
+              <ul>
+                <li>Solo se pueden modificar pedidos en estado "pendiente".</li>
+                <li>Se debe actualizar el stock en caso de eliminación de productos.</li>
+              </ul>
+            </div>
+
+            <div class="card story-card">
+              <h3>HU6 — Notificación de cambio de estado de pedido</h3>
+              <p class="story-text">
+                Como cliente, quiero recibir notificaciones sobre el estado de mi pedido para estar
+                informado de su progreso.
+              </p>
+              <ul>
+                <li>Notificación por correo o en la plataforma.</li>
+                <li>Estados: pendiente, confirmado, en despacho, entregado.</li>
+              </ul>
+            </div>
+          </div>
+
+          <h2>Módulo 3 — Reportes y Análisis de Ventas</h2>
+          <div class="card-grid">
+            <div class="card story-card">
+              <h3>HU7 — Generar reportes de ventas semanales</h3>
+              <p class="story-text">
+                Como administrador, quiero generar reportes semanales de ventas para analizar el
+                rendimiento del negocio.
+              </p>
+              <ul>
+                <li>
+                  El reporte debe incluir total de ventas, productos más vendidos y clientes más
+                  frecuentes.
+                </li>
+                <li>Exportación en formato CSV o PDF.</li>
+              </ul>
+            </div>
+
+            <div class="card story-card">
+              <h3>HU8 — Identificar carritos abandonados</h3>
+              <p class="story-text">
+                Como administrador, quiero visualizar los carritos abandonados para contactar a los
+                clientes y recuperar ventas.
+              </p>
+              <ul>
+                <li>Listado de carritos abandonados con fecha y productos.</li>
+                <li>Opción de enviar recordatorio por correo al cliente.</li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============== TECH STACK ============== -->
+        <section id="tech-stack" class="page">
+          <h1>Tech Stack</h1>
+
+          <table class="info-table">
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Technology</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Language</td>
+                <td>Java 21</td>
+              </tr>
+              <tr>
+                <td>Framework</td>
+                <td>Spring Boot 3, Spring Security, Spring Data JPA</td>
+              </tr>
+              <tr>
+                <td>Database</td>
+                <td>PostgreSQL (RDS in production)</td>
+              </tr>
+              <tr>
+                <td>Migrations</td>
+                <td>Flyway</td>
+              </tr>
+              <tr>
+                <td>Messaging</td>
+                <td>Amazon SQS, AWS EventBridge</td>
+              </tr>
+              <tr>
+                <td>Email</td>
+                <td>AWS SES</td>
+              </tr>
+              <tr>
+                <td>Storage</td>
+                <td>Amazon S3 (HTML email templates)</td>
+              </tr>
+              <tr>
+                <td>Auth</td>
+                <td>JWT (stateless, per-service validation)</td>
+              </tr>
+              <tr>
+                <td>Mapping</td>
+                <td>MapStruct</td>
+              </tr>
+              <tr>
+                <td>Build</td>
+                <td>Gradle (multi-module)</td>
+              </tr>
+              <tr>
+                <td>Containerization</td>
+                <td>Docker (multi-stage builds)</td>
+              </tr>
+              <tr>
+                <td>Reverse Proxy / TLS</td>
+                <td>Nginx, Certbot (Let's Encrypt)</td>
+              </tr>
+              <tr>
+                <td>CI/CD</td>
+                <td>AWS CodePipeline → CodeBuild → Amazon ECS</td>
+              </tr>
+              <tr>
+                <td>Compute</td>
+                <td>ECS on EC2 (self-healing Auto Scaling Group)</td>
+              </tr>
+              <tr>
+                <td>Testing</td>
+                <td>JUnit 5, Mockito, AssertJ, Testcontainers (Postgres), MockMvc</td>
+              </tr>
+              <tr>
+                <td>API Docs</td>
+                <td>springdoc-openapi (Swagger UI)</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- ============== CONTACT ============== -->
+        <section id="contact" class="page">
+          <h1>Contact</h1>
+          <div class="card">
+            <h3>David Correa</h3>
+            <p>Java Backend Developer — Medellín, Colombia</p>
+            <p>📧 <a href="mailto:davidcq55@gmail.com">davidcq55@gmail.com</a></p>
+            <p>🔗 <a href="#">LinkedIn</a> · <a href="#">GitHub</a></p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- UN ÚNICO Modal global para toda la página -->
+    <div id="diagramModal" class="modal">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <div class="modal-viewport" id="modalViewport">
+        <img class="modal-content" id="expandedImg" src="" alt="Diagrama ampliado" />
+      </div>
+      <div class="zoom-controls">
+        <button onclick="zoomIn()">+</button>
+        <button onclick="zoomOut()">-</button>
+        <button onclick="resetZoom()">Reset</button>
+      </div>
+    </div>
+
+    <script src="js/script.js"></script>
+  </body>
+</html>

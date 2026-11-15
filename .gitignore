@@ -1,0 +1,30 @@
+# IDE / editor
+.idea/
+*.iml
+.vscode/
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dependencies and build output (in case you add a build tool later)
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+
+# Temporary files and diagram backups
+*.tmp
+*.bak
+.$*.drawio.bkp
+.$*.drawio.dtmp

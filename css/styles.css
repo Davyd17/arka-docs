@@ -1,0 +1,805 @@
+/* ======================================================================
+   ARKA — ESTILOS DEL SITIO DE DOCUMENTACIÓN
+   ======================================================================
+   Orden del archivo:
+   1. Variables de tema (claro + oscuro)
+   2. Reset / base
+   3. Layout (barra superior, sidebar, contenido)
+   4. Componentes (cards, diagramas, visor de zoom, código, tablas)
+   5. Responsive (móvil)
+   6. Accesibilidad (movimiento reducido)
+   ====================================================================== */
+
+
+/* ----------------------------------------------------------------------
+   1. VARIABLES DE TEMA
+   Todos los colores salen de aquí. Para cambiar el look del sitio,
+   cambia estos valores y nada más.
+---------------------------------------------------------------------- */
+:root {
+  --topbar-h: 60px;
+  --sidebar-w: 260px;
+  --radius: 12px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1115;
+  --bg-elevated: #161922;
+  --bg-sidebar: #12141a;
+  --border: #272b35;
+  --text: #e7e9ee;
+  --text-muted: #9aa1b1;
+  --accent: #5b8cff;
+  --accent-soft: rgba(91, 140, 255, 0.12);
+  --code-bg: #1b1e27;
+  --shadow: rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f7f8fa;
+  --bg-elevated: #ffffff;
+  --bg-sidebar: #ffffff;
+  --border: #e3e6ec;
+  --text: #1b1e27;
+  --text-muted: #5b6372;
+  --accent: #3461e0;
+  --accent-soft: rgba(52, 97, 224, 0.08);
+  --code-bg: #f1f3f7;
+  --shadow: rgba(20, 24, 35, 0.08);
+}
+
+
+/* ----------------------------------------------------------------------
+   2. RESET / BASE
+---------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+button {
+  font: inherit;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* Anillo de foco visible solo al navegar con teclado */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+h1, h2, h3 {
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: 1.9rem;
+  margin: 0 0 0.5rem;
+}
+
+h2 {
+  font-size: 1.3rem;
+  margin: 2.25rem 0 0.75rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+}
+
+/* Sin línea separadora cuando el h2 viene justo debajo del título */
+h1 + h2,
+.lead + h2 {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 1.75rem;
+}
+
+h3 {
+  font-size: 1.05rem;
+}
+
+p {
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.lead {
+  font-size: 1.1rem;
+  color: var(--text-muted);
+}
+
+/* Líneas de texto cómodas de leer (no todo el ancho de la columna) */
+.page > p,
+.page > ul,
+.page > ol {
+  max-width: 72ch;
+}
+
+ul, ol {
+  padding-left: 1.25rem;
+  line-height: 1.65;
+}
+
+li {
+  margin-bottom: 0.35rem;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code {
+  background: var(--code-bg);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+
+
+/* ----------------------------------------------------------------------
+   3. LAYOUT
+---------------------------------------------------------------------- */
+
+/* --- Barra superior --- */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--topbar-h);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.25rem;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-toggle {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1.1rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+  background: var(--accent-soft);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+
+.brand-tag {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.theme-toggle {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  transition: background 0.15s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--accent-soft);
+}
+
+.icon-sun, .icon-moon {
+  font-size: 0.95rem;
+}
+
+/* Solo se muestra el ícono del tema contrario al actual */
+:root[data-theme="dark"] .icon-sun { display: none; }
+:root[data-theme="light"] .icon-moon { display: none; }
+
+
+/* --- Layout de dos columnas --- */
+.layout {
+  display: flex;
+  align-items: flex-start;
+  min-height: calc(100vh - var(--topbar-h));
+}
+
+
+/* --- Sidebar ---
+   En escritorio es "sticky": se queda fija mientras el contenido
+   hace scroll, y su lista de enlaces tiene su propio scroll interno.
+   .nav-items es lo que se recorta al plegar la sidebar, para que el
+   contenido no se reacomode antes de terminar la transición. */
+.sidebar {
+  position: sticky;
+  top: var(--topbar-h);
+  height: calc(100vh - var(--topbar-h));
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 1.25rem 0.75rem;
+  overflow: hidden;
+  transition: width 0.2s ease, padding 0.2s ease;
+}
+
+.nav-items {
+  /* ancho del sidebar menos su padding horizontal (0.75rem x 2) y el borde */
+  width: calc(var(--sidebar-w) - 1.5rem - 1px);
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding-bottom: 1rem;
+}
+
+/* Estado plegado — solo escritorio (lo activa #sidebarToggle) */
+.sidebar.collapsed {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  border-right: none;
+}
+
+.nav-group {
+  margin-top: 1.5rem;
+}
+
+.nav-group-title {
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 0 0.6rem 0.4rem;
+}
+
+.nav-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 0.55rem 0.6rem;
+  margin-bottom: 0.15rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-item:hover {
+  background: var(--accent-soft);
+}
+
+.nav-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+
+/* --- Contenido principal ---
+   min-width: 0 evita que bloques anchos (código, tablas) empujen el
+   layout flex más allá de la pantalla. margin: 0 auto centra el
+   contenido cuando la sidebar está plegada. */
+.content {
+  flex: 1;
+  min-width: 0;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 2.5rem 3rem 4rem;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ----------------------------------------------------------------------
+   4. COMPONENTES
+---------------------------------------------------------------------- */
+
+/* --- Tarjetas de diagramas ER por dominio (3 iguales en una fila) --- */
+.er-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.er-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: zoom-in;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.er-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.er-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.er-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.er-badge {
+  flex-shrink: 0;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+/* Vista previa de tamaño fijo: todas las tarjetas quedan iguales.
+   cover + top muestra la parte superior del diagrama, sin franjas vacías.
+   Si prefieres ver el diagrama completo (con espacio sobrante), cambia
+   "cover" por "contain". */
+.er-preview {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--code-bg);
+  border-radius: 8px;
+}
+
+.er-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top left;
+}
+
+.er-preview .zoom-hint {
+  top: 0.5rem;
+  bottom: auto;
+  right: 0.5rem;
+}
+
+/* --- Diagramas ---
+   .diagram-placeholder es el contenedor de TODOS los diagramas:
+   - sin imagen: caja punteada de "espacio reservado"
+   - con <img> dentro: borde sólido, clic para ampliar (visor .modal)
+   Para el estado con imagen se usa :has(img), así no hay que cambiar
+   el HTML cuando reemplaces un placeholder por un diagrama real. */
+.diagram-placeholder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 1.5rem 0;
+  padding: 3rem 1.5rem;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  text-align: center;
+  font-size: 0.95rem;
+  overflow: hidden;
+}
+
+.diagram-placeholder.small {
+  padding: 1.75rem 1rem;
+  margin-top: 1rem;
+}
+
+.diagram-placeholder:has(img) {
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  cursor: zoom-in;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.diagram-placeholder:has(img):hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.diagram-placeholder img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.zoom-hint {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  padding: 0.25rem 0.55rem;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.72);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+
+/* --- Visor de pantalla completa (zoom de diagramas) --- */
+.modal {
+  display: none;               /* el JS lo cambia a flex al abrir */
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  background: rgba(0, 0, 0, 0.92);
+}
+
+/* Área que recibe el arrastre (pan) */
+.modal-viewport {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.modal-viewport:active {
+  cursor: grabbing;
+}
+
+.modal-content {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;     /* evita el "fantasma" de arrastre de imagen en WebKit */
+  transform-origin: center center;
+  transition: transform 0.05s ease-out;
+}
+
+.close-btn {
+  position: fixed;
+  top: 20px;
+  right: 30px;
+  z-index: 10000;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 2rem;
+  line-height: 1;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.zoom-controls {
+  position: fixed;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  gap: 10px;
+  padding: 8px 15px;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 30px;
+  backdrop-filter: blur(5px);
+}
+
+.zoom-controls button {
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: #333;
+  border: 1px solid #555;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.zoom-controls button:hover {
+  background: #555;
+}
+
+
+/* --- Bloques de código / árboles de carpetas ---
+   white-space: pre conserva la alineación de los árboles ASCII; si el
+   bloque es más ancho que la pantalla, hace scroll horizontal interno
+   (en vez de partir las palabras a la mitad). */
+.code-block {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  white-space: pre;
+  tab-size: 2;
+}
+
+
+/* --- Listas ordenadas por pasos (pipeline CI/CD, etc.) --- */
+.step-list {
+  padding-left: 1.2rem;
+}
+
+.step-list li {
+  margin-bottom: 0.6rem;
+  line-height: 1.6;
+}
+
+
+/* --- Tablas --- */
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 2rem;
+  font-size: 0.92rem;
+}
+
+.info-table th,
+.info-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.info-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.info-table td:first-child {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.info-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* --- Historias de usuario ---
+   .story-text es la frase "Como <rol>, quiero..." en cursiva, para que
+   se distinga de la lista de criterios de aceptación debajo. */
+.story-card h3 {
+  margin-bottom: 0;
+}
+
+.story-card ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+
+.story-card li {
+  margin-bottom: 0.3rem;
+}
+
+.story-text {
+  font-style: italic;
+  margin: 0.4rem 0 0.75rem;
+}
+
+
+/* ----------------------------------------------------------------------
+   5. RESPONSIVE
+   Por debajo de 860px la sidebar deja de ser una columna y pasa a ser
+   un cajón (drawer) que #sidebarToggle abre/cierra con la clase .open.
+---------------------------------------------------------------------- */
+@media (max-width: 860px) {
+
+  /* Sidebar como cajón fuera de pantalla */
+  .sidebar,
+  .sidebar.collapsed {
+    position: fixed;
+    top: var(--topbar-h);
+    left: 0;
+    bottom: 0;
+    height: auto;
+    width: 240px;
+    padding: 1.25rem 0.75rem;     /* restaura lo que .collapsed quita en escritorio */
+    border-right: 1px solid var(--border);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 9;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 16px var(--shadow);
+  }
+
+  .nav-items {
+    width: auto;
+  }
+
+  /* Contenido */
+  .content {
+    max-width: 100%;
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  .brand-tag {
+    display: none;
+  }
+
+  /* Cards en una sola columna */
+  .card-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  /* Código: más compacto, con scroll horizontal interno */
+  .code-block {
+    font-size: 0.75rem;
+    padding: 0.75rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Tablas: scroll horizontal en vez de desbordar la pantalla */
+  .info-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .info-table th,
+  .info-table td {
+    padding: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  /* Diagramas: más aire para la imagen; la lectura de detalle se hace con el zoom */
+  .diagram-placeholder {
+    padding: 0.5rem;
+  }
+
+  .diagram-placeholder:not(:has(img)) {
+    padding: 2rem 1rem;
+  }
+
+  /* Visor de zoom: controles más cómodos para el dedo */
+  .close-btn {
+    top: 12px;
+    right: 16px;
+  }
+
+  .zoom-controls {
+    bottom: 15px;
+    padding: 6px 12px;
+    gap: 8px;
+  }
+
+  .zoom-controls button {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .er-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .er-card--tall {
+    grid-row: auto;
+  }
+}
+
+
+/* ----------------------------------------------------------------------
+   6. ACCESIBILIDAD
+   Respeta a quienes tienen activado "reducir movimiento" en su sistema.
+---------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
